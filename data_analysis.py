@@ -321,32 +321,23 @@ def get_max_month_occupanies(total_months):
             if(month_end >= end_date):
                 #we are spilling over, get the rest
                 days = (end_date-temp_date).days + 1
-                #TODO take out the following check
-                if (garage_info_occupancy == 3):
-                    return
-                else:
-                    l = []
-                    #print hour_index, days, hour_index+days*24-1
-                    l.append(np.amax(contract_occupancy[hour_index:hour_index+days*24]))
-                    l.append(np.amax(transient_occupancy[hour_index:hour_index+days*24]))
-                    month_occupancies[month_index].append(l)                    
+                l = []
+                l.append(np.amax(contract_occupancy[hour_index:hour_index+days*24]))
+                l.append(np.amax(transient_occupancy[hour_index:hour_index+days*24]))
+                month_occupancies[month_index].append(l)                    
                 break
             else:
                 #keep looping until we have found the end date
                 days = (month_end-temp_date).days + 1
-                #TODO take out the following check
-                if (garage_info_occupancy == 3):
-                    return
-                else:
-                    l = []
-                    #print hour_index, days, hour_index+days*24-1
-                    l.append(np.amax(contract_occupancy[hour_index:hour_index+days*24]))
-                    l.append(np.amax(transient_occupancy[hour_index:hour_index+days*24]))
-                    month_occupancies[month_index].append(l)  
+                l = []
+                l.append(np.amax(contract_occupancy[hour_index:hour_index+days*24]))
+                l.append(np.amax(transient_occupancy[hour_index:hour_index+days*24]))
+                month_occupancies[month_index].append(l)  
                 
                 #update the hour index
                 hour_index = hour_index + days*24 
                 temp_date = month_end + timedelta(days=1)
+                
             month_index = month_index + 1
         for jj in np.arange(0, month_index+1):
             months_max_occ.append(month_occupancies[jj])
