@@ -350,7 +350,7 @@ def get_max_month_occupanies(total_months):
             month_index = month_index + 1
         for jj in np.arange(0, month_index+1):
             months_max_occ.append(month_occupancies[jj])
-        return months_max_occ
+    return months_max_occ
 
 def calculate_monthly_peak_anomaly(total_months):
     #replace the following with one list
