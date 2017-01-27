@@ -14,6 +14,8 @@ Required Python Libraries:
        5. requests
        6. datetime
        7. dateutil
+
+Note: The package pyculiarity currently requires rpy2 in order to use R's stl function, so a working installation of R is necessary.
        
 After you have installed the above libraries, You will need to set the environment variable "Bearer".
 
@@ -37,6 +39,8 @@ The bearer can be found in the following way (google chrome):
     Authorization:Bearer xxxxx
     
 10. Voila, xxxxx is the value you have to set in your environment variable
+
+PS- if you are planning to run analysis on a year beyond 2015-2017 (which somebody will do in future), you need to add a file called holidays\<year\>. e.g holidays2018 for holidays in 2018.  Please check the other holiday filed for the formatiing info.  
 
 Please send an email to arnamoyb@ece.utoronto.ca if you have questions/ concerns.
     
