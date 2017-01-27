@@ -267,18 +267,17 @@ def gather_unusual_anomalies_monthly(ii,dates,con_tran):
 
 def calculate_mp_anomaly_indiv(con_tran, total_months, months_max_occ):
     training_data = []
+    
     #forming the training data set
-    #TODO take out the loop
-    for ii in np.arange(0, 1):
-        t = []                                      
-        for jj in np.arange(0, total_months+1):
-            if (con_tran == 0): #contracts
-                t.append(months_max_occ[jj][ii][0])
-            else:
-                t.append(months_max_occ[jj][ii][1])
+    t = []                                      
+    for jj in np.arange(0, total_months+1):
+        if (con_tran == 0): #contracts
+            t.append(months_max_occ[jj][0][0])
+        else:
+            t.append(months_max_occ[jj][0][1])
 
-        t1=map(float, t)
-        training_data.append(t1)
+    t1=map(float, t)
+    training_data.append(t1)
             
     #Array to hold if there was an anomaly or not for a month
     #a value of 1 means zero anomaly and a value of 2 means unusual anomaly
@@ -286,8 +285,7 @@ def calculate_mp_anomaly_indiv(con_tran, total_months, months_max_occ):
     anomaly_present = get_zero_iqr_monthly(training_data)     
                 
     dates = date_range(start_date, periods=total_months+1, freq='M')
-    
-    
+      
     for ii in np.arange(0,len(anomaly_present)):
         if anomaly_present[ii] == 1:
             gather_zero_anomalies_monthly(ii,dates,con_tran)
@@ -303,52 +301,44 @@ def get_max_month_occupanies(total_months):
     #months_max_occ[month_index][garage_index][contract/transient]
     months_max_occ=[]
     month_occupancies=[[] for ii in range(total_months+2)]
-    
-    #TODO take out the loop
-    for ii in np.arange(0,1):
 
-        temp_date = to_datetime(start_date_supplied)
-        month_end = to_datetime(start_date)
+    temp_date = start_date
+    month_end = start_date
         
-        #index to extract data from the master datastructures
-        #e.g contracts and transients
-        hour_index = 0
-        month_index = 0
-        while True:
-            #calculate the month end date, so that we can extract data
-            month_end = temp_date + relativedelta.relativedelta(day=31)
+    #index to extract data from the master datastructures
+    #e.g contracts and transients
+    hour_index = 0
+    month_index = 0
+    while True:
+        #calculate the month end date, so that we can extract data
+        month_end = temp_date + relativedelta.relativedelta(day=31)
             
-            if(month_end >= end_date):
-                #we are spilling over, get the rest
-                days = (end_date-temp_date).days + 1
-                l = []
-                l.append(np.amax(contract_occupancy[hour_index:hour_index+days*24]))
-                l.append(np.amax(transient_occupancy[hour_index:hour_index+days*24]))
-                month_occupancies[month_index].append(l)                    
-                break
-            else:
-                #keep looping until we have found the end date
-                days = (month_end-temp_date).days + 1
-                l = []
-                l.append(np.amax(contract_occupancy[hour_index:hour_index+days*24]))
-                l.append(np.amax(transient_occupancy[hour_index:hour_index+days*24]))
-                month_occupancies[month_index].append(l)  
+        if(month_end >= end_date):
+            #we are spilling over, get the rest
+            days = (end_date-temp_date).days + 1
+            month_occupancies[month_index].append([np.amax(contract_occupancy[hour_index:hour_index+days*24]),
+                                                      np.amax(transient_occupancy[hour_index:hour_index+days*24])])
+            break
+        else:
+            #keep looping until we have found the end date
+            days = (month_end-temp_date).days + 1
+            month_occupancies[month_index].append([np.amax(contract_occupancy[hour_index:hour_index+days*24]),
+                                                      np.amax(transient_occupancy[hour_index:hour_index+days*24])])  
                 
-                #update the hour index
-                hour_index = hour_index + days*24 
-                temp_date = month_end + timedelta(days=1)
+            #update the hour index
+            hour_index = hour_index + days*24 
+            temp_date = month_end + timedelta(days=1)
                 
-            month_index = month_index + 1
-        for jj in np.arange(0, month_index+1):
-            months_max_occ.append(month_occupancies[jj])
+        month_index = month_index + 1
+    for jj in np.arange(0, month_index+1):
+        months_max_occ.append(month_occupancies[jj])
     return months_max_occ
 
 def calculate_monthly_peak_anomaly(total_months):
     #replace the following with one list
     #needed to do total_months+2 for various date perks
     months_max_occ = get_max_month_occupanies(total_months)
-            
-                
+                       
     #STAGE 3:  Anomaly Detection     
                                            
     #dealing with contracts
@@ -476,13 +466,12 @@ def calculate_dp_anomaly_indiv(con_tran, ndays):
     daily_peak = get_daily_peak(con_tran, ndays)
                     
     #Anomaly Detection part
-
+    
     #hard coded for dealing with just one garage
     anomaly_present = detect_zero_iqr(daily_peak)
 
     dates = bdate_range(start_date, periods=ndays)
-                
-    
+                 
     for ii in np.arange(0,len(anomaly_present)):
             
         #Zero Gap anomaly
@@ -494,52 +483,41 @@ def calculate_dp_anomaly_indiv(con_tran, ndays):
             gather_unusual_anomalies(ii,dates,con_tran)
     
 def calculate_daily_peak_anomaly(ndays):
-    #TODO take out the following loop
-    for ii in np.arange(0, 1):
-        if((garage_info_occupancy == 0) or (garage_info_occupancy == 1)):
-            calculate_dp_anomaly_indiv(0, ndays)
+    if((garage_info_occupancy == 0) or (garage_info_occupancy == 1)):
+        calculate_dp_anomaly_indiv(0, ndays)
     #Do the same thing for "transients"
-    for ii in np.arange(0, 1):
-        if((garage_info_occupancy == 0) or (garage_info_occupancy == 2)):
-            calculate_dp_anomaly_indiv(1, ndays)
+    if((garage_info_occupancy == 0) or (garage_info_occupancy == 2)):
+        calculate_dp_anomaly_indiv(1, ndays)
     
 
 
 def get_daily(con_tran, ndays):
     total_daily = []
-    #TODO make start_date global
-    start_date = to_datetime(start_date_supplied)
-    end_date = to_datetime(end_date_supplied)
         
     #get day index of the week Sunday -> 0, Monday -> 1 etc.
     day_index = start_date.weekday()
+    
+    #data_structure for a single garage
+    temp_daily = []
         
-    for mm in np.arange(0, 1):
-        #TODO take out the next check
-            
-        #data_structure for a single garage
-        temp_daily = []
-        
-        for nn in np.arange(0, ndays):
-            day_index = day_index +1
-        
-
-            if(day_index == 7):
-                day_index = 0
-                continue
-            if(day_index == 6):
-                continue
-            else:
+    for nn in np.arange(0, ndays):
+        day_index = day_index +1
+        if(day_index == 7):
+            day_index = 0
+            continue
+        if(day_index == 6):
+            continue
+        else:
                 #we are at the other 5 days of the week, calculate the occupancy for a day and add
-                lower = nn*24
-                upper = lower+23
+            lower = nn*24
+            upper = lower+23
             
-                if(con_tran == 0):
-                    temp_daily.append(contract_occupancy[lower:upper+1])
-                else:
-                    temp_daily.append(transient_occupancy[lower:upper+1])
+            if(con_tran == 0):
+                temp_daily.append(contract_occupancy[lower:upper+1])
+            else:
+                temp_daily.append(transient_occupancy[lower:upper+1])
         
-        total_daily.append(temp_daily) 
+    total_daily.append(temp_daily) 
     return total_daily
 
 def s_h_esd_algo(total_daily):
@@ -554,8 +532,7 @@ def s_h_esd_algo(total_daily):
        
     #hard coding for one garage, sorry
     #ww is a day
-    for ww in total_daily[0]:
-                   
+    for ww in total_daily[0]:              
         #create the hours for that day
         temp_hours= bdate_range(dates[index], periods=len(ww),freq='H')
         m=0
@@ -584,18 +561,15 @@ def s_h_esd_algo(total_daily):
     for ii in indices:
         result_dates.append(hours[int(ii)].date())
     return result_dates
-def calculate_daily_indiv(con_tran, ndays):
-    
+def calculate_daily_indiv(con_tran, ndays):  
     #data structure to hold the hourly data for the given days for
     #the garages
     total_daily = get_daily(con_tran, ndays)
 
              
     for ss in np.arange(0, len(total_daily)):
-
         result_dates = s_h_esd_algo(total_daily)
-                    
-                                    
+                                                
         df = DataFrame({'date': result_dates})
         df1=df.drop_duplicates('date')
                 
@@ -607,8 +581,6 @@ def calculate_daily_indiv(con_tran, ndays):
                     anom_type = "contract-unusual-daily"
                 else:
                     anom_type = "transient-unusual-daily"
-                                
-                            
                     
                 temp_anomaly.append(mon)
                 temp_anomaly.append(anom_type)
@@ -624,9 +596,6 @@ def calculate_daily_anomaly(ndays):
     if((garage_info_occupancy == 0) or (garage_info_occupancy == 2)):  
         calculate_daily_indiv(1, ndays)
     
-
-
-
 def get_overnight(con_tran, ndays):
     total_daily = []
     start_date = to_datetime(start_date_supplied)
@@ -637,7 +606,6 @@ def get_overnight(con_tran, ndays):
         
     for nn in np.arange(0, ndays):
         day_index = day_index +1
-        
 
         if(day_index == 7):
             day_index = 0
@@ -646,13 +614,9 @@ def get_overnight(con_tran, ndays):
             continue
         else:
             #we are at the other 5 days of the week, 
-            #calculate the maximum night occupancy 
-                        
+            #calculate the maximum night occupancy             
             lower_n = nn*24
             upper_n = lower_n+5
-                    
-            lower = nn*24
-            upper = lower + 23
                     
             if(con_tran == 0):
                 temp_daily.append(np.max(contract_occupancy[lower_n:upper_n+1]))
@@ -673,8 +637,7 @@ def get_iqr_indices_overnight(total_daily):
     #ww is a day
     for ww in total_daily[0]:
         data.append(ww)
-                    
-
+        
     p25 = np.percentile(data, 25)
     p75 = np.percentile(data, 75)
     iqr = np.subtract(*np.percentile(data, [75, 25]))
@@ -709,8 +672,7 @@ def gather_overnight_anomalies(con_tran, total_daily,indices):
                     anom_type = "contract-unusual-overnight"
                 else:
                     anom_type = "transient-unusual-overnight"
-                                
-                    
+    
                 temp_anomaly.append(mon)
                 temp_anomaly.append(anom_type)
 
@@ -725,20 +687,13 @@ def calculate_overnight_indiv(con_tran, ndays):
                     
     
 def calculate_overnight_anomaly(ndays):
-    
-    #only populate data for the weekdays
-    #TODO take out the following loop
-    for mm in np.arange(0, 1):
-        if((garage_info_occupancy == 0) or (garage_info_occupancy == 1)):
-            calculate_overnight_indiv(0, ndays)
 
+    if((garage_info_occupancy == 0) or (garage_info_occupancy == 1)):
+        calculate_overnight_indiv(0, ndays)
 
     #for transients
-    
-    #TODO: take out the following loop
-    for kk in np.arange(0, 1):
-        if((garage_info_occupancy == 0) or (garage_info_occupancy == 2)):
-            calculate_overnight_indiv(1, ndays)
+    if((garage_info_occupancy == 0) or (garage_info_occupancy == 2)):
+        calculate_overnight_indiv(1, ndays)
 
 
 def gather_duration_anomalies(sum_one_hour, sum_ten_minutes, sum_t):
