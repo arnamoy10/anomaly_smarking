@@ -15,7 +15,7 @@ Required Python Libraries:
        6. datetime
        7. dateutil
 
-Note: The package pyculiarity currently requires rpy2 in order to use R's stl function, so a working installation of R is necessary.
+Note: The package pyculiarity currently requires rpy2 in order to use R's stl function, so a working installation of R is necessary. https://cran.rstudio.com/bin/macosx/
        
 After you have installed the above libraries, You will need to set the environment variable "Bearer".
 
