@@ -1,29 +1,33 @@
 # anomaly_smarking
 Anomaly detection scripts at Smarking
 
-RELEASE Version 1.0: Jan 26, 2017
+RELEASE Version 1.1: Jan 30, 2017
 
-Required Python Libraries:
+Compatible with python 3
 
-   use "pip install" to install the following libaries:
-       
-       1. pyculiarity (library for signal processing anomaly detection)
-       2. pandas
-       3. numpy
-       4. json
-       5. requests
-       6. datetime
-       7. dateutil
+Steps:
 
-Note: The package pyculiarity currently requires rpy2 in order to use R's stl function, so a working installation of R is necessary. https://cran.rstudio.com/bin/macosx/
-       
-After you have installed the above libraries, You will need to set the environment variable "Bearer".
+   1. install R (https://cran.rstudio.com/bin/macosx/)
+   
+   2. use "pip install" to install the following libaries:
+        pip3 install pyculiarity requests
+   3. Modify the following file:
+        cd /usr/local/lib/python3.6/site-packages/
+        2to3 -w -n pyculiarity
+        
+   4. Change line 81 of /usr/local/lib/python3.6/site-packages/pyculiarity/detect_anoms.py to the following:
+        'value': ps.to_numeric((decomp['trend'] + decomp['seasonal']).truncate())
 
-To set it, use the following command:
+   5. You will need to set the environment variable "Bearer". use the following command:
 
-     export Bearer="blah" (you have to give the quotes also)
+        export Bearer="blah" (you have to give the quotes also)**
      
-The bearer can be found in the following way (google chrome):
+   6. You can run the python script as follows
+        python3 data_analysis_dynamic.py 860170 2017-01-01 2017-01-28
+    
+      arguments are <garage_id> <start_date> <end_date>
+
+**The bearer can be found in the following way (google chrome):
 
 1.  Open my.smarking.net
 2.  Open developer tools
@@ -40,7 +44,14 @@ The bearer can be found in the following way (google chrome):
     
 10. Voila, xxxxx is the value you have to set in your environment variable
 
+
+
+
 PS- if you are planning to run analysis on a year beyond 2015-2017 (which somebody will do in future), you need to add a file called holidays\<year\>. e.g holidays2018 for holidays in 2018.  Please check the other holiday filed for the formatiing info.  
 
 Please send an email to arnamoyb@ece.utoronto.ca if you have questions/ concerns.
+
+Release History:
+
+RELEASE Version 1.0: Jan 26, 2017
     

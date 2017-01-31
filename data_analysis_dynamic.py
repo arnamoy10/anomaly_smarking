@@ -39,50 +39,16 @@ anomalies_for_google_docs=[]
 #get the number of hours, necessary to download occupancy
 date_format = "%Y-%m-%d"
 
-    
-#Array to hold if there was data for occupancy present at the garage 
-# 0 -> everything present
-# 1 -> contract present
-# 2 -> transient present
-# 3 -> nothing present                  
-garage_info_occupancy = 0
-garage_info_duration = 0
-
-line_index=0
-
-#objects to store the parsed result
-contract_occupancy = []
-transient_occupancy = []
-
 occupancies_all_groups = []
 durations_all_groups = []
 names_all_groups = []
-
-contract_duration = []
-transient_duration = []
-
 
 #NEW: User type groups
 user_type_groups = []
 
 monthly_peak_zero = []
 
-
 total_months = 0
-
-# data structure to filter out daily zero peak anomalies
-# because if a month has zero peak anomaly, you do not
-# need to report daily zero peaks
-monthly_peak_anomalies_con =[]
-monthly_peak_anomalies_tran =[]
-
-
-
-
-#data structure to filter out overnight anomalies
-#from daily peak anomalies
-daily_peak_anomalies_con = []
-daily_peak_anomalies_tran= []
 
 
 #the supplied start and end date
@@ -98,21 +64,6 @@ if ('Bearer' not in os.environ):
     sys.exit(0)
 bearer = "Bearer "+ str(os.environ['Bearer'])
 headers = {"Authorization":bearer}
- 
-def set_garage_info_occupancy(con, tran):
-    global contract_occupancy, transient_occupancy, garage_info_occupancy
-    if ((con == 0) and (tran == 0)):
-        garage_info_occupancy = 3
-        print ("No Occupancy data present for this garage for the given time")
-        return
-    if (con == 0):
-        l = len(transient_occupancy)
-        contract_occupancy = [0] * l
-        garage_info_occupancy = 2
-    if (tran == 0):
-        l = len(contract_occupancy)
-        transient_occupancy = [0] * l
-        garage_info_occupancy = 1
 
 def get_json_info(url):
     #get the response using the url
@@ -135,8 +86,7 @@ def get_json_info(url):
 
 
 def get_occupancy_data():
-    global headers, contract_occupancy, transient_occupancy \
-    , garage_info_occupancy, occupancies_all_groups, names_all_groups
+    global headers, occupancies_all_groups, names_all_groups
     
     #get the duration for the supplied date range so that we can create the URL
 
@@ -149,11 +99,6 @@ def get_occupancy_data():
         duration_hours = (abs(delta.days)+1) * 24
     
     url="https://my.smarking.net/api/ds/v3/garages/"+str(garage_id)+"/past/occupancy/from/"+start_date_supplied+"T00:00:00/"+str(duration_hours)+"/1h?gb=User+Type"
-    
-    
-    
-    con = 0
-    tran = 0
 
     garage_info = get_json_info(url)
     
@@ -169,10 +114,6 @@ def get_occupancy_data():
         
         occupancies_all_groups.append(item.get("value"))
         names_all_groups.append(group)
-        
-
-
-    
     
 def get_duration_data():
     
@@ -201,11 +142,11 @@ def get_zero_indices(training_data):
     return indices
 
 def get_iqr_indices(training_data):
+    
     indices = []
     
     #Algorithm (detecting non zero gaps):
     # If data points fall beyond 3 IQR -> REPORT gap
-
     p25 = np.percentile(training_data, 25)
     p75 = np.percentile(training_data, 75)
     iqr = np.subtract(*np.percentile(training_data, [75, 25]))
@@ -221,9 +162,6 @@ def get_iqr_indices(training_data):
     return indices
 
 def gather_anomalies_monthly(dates,indices, group_currently_processing,zero_iqr):
-    '''
-    global monthly_peak_anomalies_con, monthly_peak_anomalies_tran
-    '''
     
     anomaly_dates = dates[indices]
     for anom_date in anomaly_dates:
@@ -231,28 +169,18 @@ def gather_anomalies_monthly(dates,indices, group_currently_processing,zero_iqr)
         temp_anomaly=[]
         mon = str(anom_date.year)+"-"+str(anom_date.month)
         if(zero_iqr == 0):
-            anom_type = "zero "+ group_currently_processing \
-                        + " monthly peak"
+            anom_type = group_currently_processing \
+                        + " zero monthly peak"
             #also store in monthly_peak_zero for daily_peak_zero analysis
             monthly_peak_zero.append(mon)
         else:
-            anom_type = "unusual "+ group_currently_processing \
-                        + " monthly peak"
+            anom_type = group_currently_processing \
+                        + " unusual monthly peak"
                     
         temp_anomaly.append(mon)
         temp_anomaly.append(anom_type)
 
         anomalies_for_google_docs.append(temp_anomaly)
-    
-    #NEW: TODO
-    #also add to data structure so that we can filter out
-    #daily peak zero anomalies
-    '''
-    if(con_tran == 0): #contracts
-        monthly_peak_anomalies_con.append("con-"+mon)
-    else:
-        monthly_peak_anomalies_tran.append("tran-"+mon)
-    '''
 
 def calculate_mp_anomaly_indiv(months_max_occ, group_currently_processing):
     training_data = []
@@ -274,9 +202,7 @@ def calculate_mp_anomaly_indiv(months_max_occ, group_currently_processing):
 def get_max_month_occupanies(total_months, group_occupancy):
     # contracts_occupancy[] and transients_occupancy[] looks like this:
     # [day_1_hour1, day1_hour2, ..., day365_hour24]
-        
-    #TODO take out the garage_index by removing the loop
-    #months_max_occ[month_index][garage_index][contract/transient]
+    
     month_occupancies=[]
     
     temp_date = start_date
@@ -307,12 +233,10 @@ def get_max_month_occupanies(total_months, group_occupancy):
     return month_occupancies
 
 def calculate_monthly_peak_anomaly(total_months, group_occupancy, group_currently_processing):
-    #replace the following with one list
-    #needed to do total_months+2 for various date perks
+
     months_max_occ = get_max_month_occupanies(total_months, group_occupancy)
                        
-    #STAGE 3:  Anomaly Detection 
-    
+    #Anomaly Detection 
     calculate_mp_anomaly_indiv(months_max_occ, group_currently_processing)
 
     
@@ -348,26 +272,17 @@ def gather_anomalies_daily(dates,indices, group_currently_processing,zero_iqr):
             #print mon
             found = 0
             if(zero_iqr == 0):
-                anom_type = "zero "+group_currently_processing+" daily-peak"
+                anom_type = group_currently_processing+" zero daily-peak"
                 if (str(anom_date.year)+"-"+str(anom_date.month)) in monthly_peak_zero:
                     #print "found in"
                     found = 1
             else:
-                anom_type = "unusual "+group_currently_processing+" daily-peak"
+                anom_type = group_currently_processing+" unusual daily-peak"
             
             if (found == 0):
                 temp_anomaly.append(mon)
                 temp_anomaly.append(anom_type)
                 anomalies_for_google_docs.append(temp_anomaly)
-        
-        #NEW TODO
-        '''    
-        #also add the date to the data structure
-        if(con_tran == 0):
-            daily_peak_anomalies_con.append(dates[ii].date())
-        else:
-            daily_peak_anomalies_tran.append(dates[ii].date())
-        '''
                                     
 def calculate_dp_anomaly(ndays, training_data, group_currently_processing): 
     #data_structure to hold daily peak occupancy of all garages
@@ -455,6 +370,7 @@ def s_h_esd_algo(total_daily):
     for ii in indices:
         result_dates.append(hours[int(ii)].date())
     return result_dates
+
 def calculate_daily_indiv(ndays, training_data, group_currently_processing):  
     #data structure to hold the hourly data for the given days for
     #the garages
@@ -474,14 +390,12 @@ def calculate_daily_indiv(ndays, training_data, group_currently_processing):
                 
             temp_anomaly.append(mon)
             temp_anomaly.append(anom_type)
-            anomalies_for_google_docs.append(temp_anomaly) 
-    
+            anomalies_for_google_docs.append(temp_anomaly)   
     
 def get_overnight(training_data, ndays):
     total_daily = []
     #get day index of the week Sunday -> 0, Monday -> 1 etc.
     day_index = start_date.weekday()
-
         
     for nn in np.arange(0, ndays):
         day_index = day_index +1
@@ -500,32 +414,6 @@ def get_overnight(training_data, ndays):
             total_daily.append(np.max(training_data[lower_n:upper_n+1]))
 
     return total_daily
-
-def get_iqr_indices_overnight(total_daily):
-    #total_daily[garage_index][day_index][hour_index]
-    data=[]
-    hours=[]
- 
-    index = 0
-    
-    #hard coding for one garage, sorry
-    #ww is a day
-    for ww in total_daily[0]:
-        data.append(ww)
-        
-    p25 = np.percentile(data, 25)
-    p75 = np.percentile(data, 75)
-    iqr = np.subtract(*np.percentile(data, [75, 25]))
-
-    #1.5 was too restrictive
-    lower = p25 - 3 * (p75 - p25)
-    upper = p75 + 3 * (p75 - p25)
-    
-    indices = []
-    for m in np.arange(0,len(data)):
-        if ((round(data[m],2) < round(lower,2)) or (round(data[m],2) > round(upper, 2))): 
-            indices.append(m)
-    return indices
                 
 def gather_overnight_anomalies(group_now_processing, dates, indices):
 
@@ -555,9 +443,6 @@ def calculate_overnight_anomaly(ndays, training_data, group_now_processing):
     dates = bdate_range(start_date, periods=ndays)
     gather_overnight_anomalies(group_now_processing, dates, indices)
                     
-    
-
-
 def gather_duration_anomalies(sum_one_hour, sum_ten_minutes, sum_t, group_now_processing):
     percent_one_hour = (sum_one_hour/float(sum_t))*100
     percent_ten_minute = (sum_ten_minutes/float(sum_t))*100
@@ -566,7 +451,6 @@ def gather_duration_anomalies(sum_one_hour, sum_ten_minutes, sum_t, group_now_pr
         temp_anomaly=[]
         mon = str(start_date_supplied)+" "+str(end_date_supplied)
         anom_type = group_now_processing + str(percent_one_hour)+" % one hour parkers"
-
                     
         temp_anomaly.append(mon)
         temp_anomaly.append(anom_type)
@@ -576,9 +460,7 @@ def gather_duration_anomalies(sum_one_hour, sum_ten_minutes, sum_t, group_now_pr
         temp_anomaly=[]
         mon = str(start_date_supplied)+" "+str(end_date_supplied)
         anom_type = group_now_processing+ str(percent_ten_minute)+" % ten minute parkers"
-
-    
-                    
+           
         temp_anomaly.append(mon)
         temp_anomaly.append(anom_type)
 
@@ -592,7 +474,6 @@ def calculate_duration_anomalies(training_data, group_now_processing):
     #   2.  The whole day is not flat but still a spike in night occupancy
     #TODO:  Eliminate the days where peak daily occupancy is already reported.
     
-
     sum_t=np.sum(training_data)
     
     sum_one_hour = 0
@@ -630,12 +511,11 @@ def get_months():
     months = delta.months
     years = delta.years
 
-
     total_months = abs(years)*12+abs(months)
 def main():    
     
     #globals we are using
-    global garage_id, garage_info_occupancy, anomalies_for_google_docs, start_date, end_date
+    global garage_id, anomalies_for_google_docs, start_date, end_date
         
     print ("  Processing Garage", garage_id) 
     
@@ -656,9 +536,6 @@ def main():
 
     #STAGE 2: Getting the date
     get_occupancy_data()
-    
-    #print occupancies_all_groups
-    #print names_all_groups
     get_duration_data()
     
     #if at least not two full months, skip the monthly analysis
@@ -666,9 +543,8 @@ def main():
 
     delta= end_date - start_date
     ndays = abs(delta.days)+1
-    
-    #print names_all_groups
-    
+        
+    #anomaly detection
     for ii in np.arange(0, len(occupancies_all_groups)):
         if (total_months > 6):
             calculate_monthly_peak_anomaly(total_months, occupancies_all_groups[ii], names_all_groups[ii])
@@ -683,44 +559,9 @@ def main():
             
         calculate_duration_anomalies(occupancies_all_groups[ii], names_all_groups[ii])
         
+    #print detected anomalies
     for item in anomalies_for_google_docs:
         print (item[0],item[1]) 
-    #print len(anomalies_for_google_docs)
-    #print anomalies_for_google_docs
-    '''
-                            
-    #######################################
-    #Daily PEAK Occupancy                      #
-    #######################################
-    
-    if (ndays > 20):
-        calculate_daily_peak_anomaly(ndays)                 
-    
-    #######################################
-    #Daily Occupancy                      #
-    #######################################
-    #we choose 18 because we need at least 
-    #some data points to get signal properties
-    if (ndays > 18):
-        calculate_daily_anomaly(ndays)
-    
-    ############################
-    #   Overnight Occupancy    #
-    ############################
-    
-    if (ndays > 18):
-        calculate_overnight_anomaly(ndays)
-    
-    #####################
-    #duration anomalies #
-    #####################    
-         
-    calculate_duration_anomalies()
-    for item in anomalies_for_google_docs:
-        print item[0],"-",item[1]
-
-    '''
 
 if __name__ == "__main__":   
     main()
-
