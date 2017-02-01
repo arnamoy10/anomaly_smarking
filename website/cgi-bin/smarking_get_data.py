@@ -19,10 +19,9 @@ import smarking_globals
 #TODO: take out the loop and fix indentation
 
 #change the authentication token accordingly
-if ('Bearer' not in os.environ):
-    print ("Please set the Bearer environment variable")
-    sys.exit(0)
-smarking_globals.bearer = "Bearer "+ str(os.environ['Bearer'])
+with open("bearer") as f:
+    smarking_globals.bearer = "Bearer "+ str(f.readline().rstrip('\n'))
+
 smarking_globals.headers = {"Authorization":smarking_globals.bearer}
 
 def get_json_info(url):

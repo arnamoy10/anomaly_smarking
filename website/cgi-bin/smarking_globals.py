@@ -28,3 +28,11 @@ total_months = 0
 
 #the supplied start and end date
 global start_date, end_date, bearer, headers, garage_id ,start_date_supplied ,end_date_supplied 
+
+global garage_name_dict
+garage_name_dict ={}
+global garage_url_dict
+garage_url_dict = {}
+
+#needed to form the url
+global garage_name, garage_url

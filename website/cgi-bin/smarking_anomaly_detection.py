@@ -244,19 +244,7 @@ def calculate_daily_indiv(ndays, training_data, group_currently_processing):
  
     result_dates = s_h_esd_algo(total_daily)
                                                 
-    df = DataFrame({'date': result_dates})
-    df1=df.drop_duplicates('date')
-                
-    for row in df1.iterrows():
-        if ((str(row[1].date.year)+"-"+str(row[1].date.month)+"-"+str(row[1].date.day)) not in smarking_globals.holidays):
-            temp_anomaly=[]
-            mon = str(row[1].date.year)+"-"+str(row[1].date.month)+"-"+str(row[1].date.day)
-            anom_type = group_currently_processing+" unusual-daily"
-
-                
-            temp_anomaly.append(mon)
-            temp_anomaly.append(anom_type)
-            smarking_globals.anomalies_for_google_docs.append(temp_anomaly)   
+    smarking_gather_results.gather_daily_anomaly(result_dates, group_currently_processing) 
     
 def get_overnight(training_data, ndays):
     total_daily = []

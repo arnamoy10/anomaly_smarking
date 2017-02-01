@@ -36,9 +36,16 @@ def gather_anomalies_monthly_peak(dates,indices, group_currently_processing,zero
         else:
             anom_type = group_currently_processing \
                         + " trend change in monthly peak"
+                
+        url = "https://my.smarking.net/rt/"+smarking_globals.garage_url.rstrip('\n')\
+        +"/occupancy?granularity=Monthly&fromDateStr="+str(smarking_globals.start_date)\
+        +"&toDateStr="+str(smarking_globals.end_date)
                     
         temp_anomaly.append(mon)
         temp_anomaly.append(anom_type)
+        temp_anomaly.append(url)
+        temp_anomaly.append("No")
+        temp_anomaly.append("No")
 
         smarking_globals.anomalies_for_google_docs.append(temp_anomaly)
             
@@ -63,13 +70,44 @@ def gather_anomalies_daily_peak(dates,indices, group_currently_processing,zero_i
                 anom_type = group_currently_processing+" trend change in daily-peak"
             
             if (found == 0):
+                url = "https://my.smarking.net/rt/"+smarking_globals.garage_url.rstrip('\n')\
+                        +"/occupancy?granularity=Monthly&fromDateStr="\
+                        +str(smarking_globals.start_date) +"&toDateStr="+\
+                        str(smarking_globals.end_date)
+                    
                 temp_anomaly.append(mon)
                 temp_anomaly.append(anom_type)
+                temp_anomaly.append(url)
+                temp_anomaly.append("No")
+                temp_anomaly.append("No")
+
                 smarking_globals.anomalies_for_google_docs.append(temp_anomaly)
                 #also add to the daily peak anomalies data struct
                 smarking_globals.daily_peak_anomalies.append(mon+group_currently_processing)
                                     
+def gather_daily_anomaly(result_dates, group_currently_processing):
+    df = DataFrame({'date': result_dates})
+    df1=df.drop_duplicates('date')
                 
+    for row in df1.iterrows():
+        if ((str(row[1].date.year)+"-"+str(row[1].date.month)+"-"+str(row[1].date.day)) not in smarking_globals.holidays):
+            temp_anomaly=[]
+            mon = str(row[1].date.year)+"-"+str(row[1].date.month)+"-"+str(row[1].date.day)
+            anom_type = group_currently_processing+" unusual-daily"
+
+            start_d = str(row[1].date - timedelta(days=40))
+            end_d = str(row[1].date + timedelta(days=40))
+            url = "https://my.smarking.net/rt/"+smarking_globals.garage_url.rstrip('\n')\
+            +"/occupancy?occupancyType=regular&fromDateStr="+start_d+"&toDateStr="+end_d
+                    
+            temp_anomaly.append(mon)
+            temp_anomaly.append(anom_type)
+            temp_anomaly.append(url)
+            temp_anomaly.append("No")
+            temp_anomaly.append("No")
+            
+            smarking_globals.anomalies_for_google_docs.append(temp_anomaly)  
+            
 def gather_overnight_anomalies(group_now_processing, dates, indices):
 
     for row in dates[indices]:
@@ -85,9 +123,18 @@ def gather_overnight_anomalies(group_now_processing, dates, indices):
                 mon = str(row.date().year)+"-"+str(row.date().month)+"-"+str(row.date().day)
 
                 anom_type = group_now_processing+" unusual-overnight"
-    
+                
+                start_d = str(row.date() - timedelta(days=3))
+                end_d = str(row.date() + timedelta(days=3))
+                                #generate url
+                url = "https://my.smarking.net/rt/"+smarking_globals.garage_url.rstrip('\n')\
+                +"/occupancy?occupancyType=regular&fromDateStr="+start_d+"&toDateStr="+end_d
+                    
                 temp_anomaly.append(mon)
                 temp_anomaly.append(anom_type)
+                temp_anomaly.append(url)
+                temp_anomaly.append("No")
+                temp_anomaly.append("No")
 
                 smarking_globals.anomalies_for_google_docs.append(temp_anomaly)    
                     
@@ -109,7 +156,14 @@ def gather_duration_anomalies(sum_one_hour, sum_ten_minutes, sum_t, group_now_pr
         mon = str(smarking_globals.start_date_supplied)+" "+str(smarking_globals.end_date_supplied)
         anom_type = group_now_processing+ str(percent_ten_minute)+" % ten minute parkers"
            
+        url = "https://my.smarking.net/rt/"+smarking_globals.garage_url.rstrip('\n')\
+        +"/duration-distribution?bucketInMinutes=10&fromDateStr="\
+        +str(smarking_globals.start_date)+"&toDateStr="+str(smarking_globals.end_date)
+                    
         temp_anomaly.append(mon)
         temp_anomaly.append(anom_type)
+        temp_anomaly.append(url)
+        temp_anomaly.append("No")
+        temp_anomaly.append("No")
 
         smarking_globals.anomalies_for_google_docs.append(temp_anomaly)
