@@ -10,6 +10,7 @@ Steps:
    1. install R (https://cran.rstudio.com/bin/macosx/)
    
    2. Open an R console and install the "library(changepoint)"
+        
         sudo R
         install.packages("library(changepoint)")
    
