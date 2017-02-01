@@ -23,6 +23,7 @@ Steps:
         2to3 -w -n pyculiarity
         
    5. Change line 81 of /usr/local/lib/python3.6/site-packages/pyculiarity/detect_anoms.py to the following:
+        
         'value': ps.to_numeric((decomp['trend'] + decomp['seasonal']).truncate())
 
    6. You will need to set the environment variable "Bearer". use the following command:
