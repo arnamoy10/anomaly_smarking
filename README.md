@@ -34,7 +34,7 @@ Steps:
         
         python3 data_analysis_dynamic.py 860170 2017-01-01 2017-01-28
     
-      arguments are <garage_id> <start_date> <end_date>
+      arguments are \<garage_id\> \<start_date\> \<end_date\>
 
 **The bearer can be found in the following way (google chrome):
 
