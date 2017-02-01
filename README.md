@@ -9,20 +9,24 @@ Steps:
 
    1. install R (https://cran.rstudio.com/bin/macosx/)
    
-   2. use "pip install" to install the following libaries:
+   2. Open an R console and install the "library(changepoint)"
+        sudo R
+        install.packages("library(changepoint)")
+   
+   3. use "pip install" to install the following libaries:
         pip3 install pyculiarity requests
-   3. Modify the following file:
+   4. Modify the following file:
         cd /usr/local/lib/python3.6/site-packages/
         2to3 -w -n pyculiarity
         
-   4. Change line 81 of /usr/local/lib/python3.6/site-packages/pyculiarity/detect_anoms.py to the following:
+   5. Change line 81 of /usr/local/lib/python3.6/site-packages/pyculiarity/detect_anoms.py to the following:
         'value': ps.to_numeric((decomp['trend'] + decomp['seasonal']).truncate())
 
-   5. You will need to set the environment variable "Bearer". use the following command:
+   6. You will need to set the environment variable "Bearer". use the following command:
 
         export Bearer="blah" (you have to give the quotes also)**
      
-   6. You can run the python script as follows
+   7. You can run the python script as follows
         python3 data_analysis_dynamic.py 860170 2017-01-01 2017-01-28
     
       arguments are <garage_id> <start_date> <end_date>
