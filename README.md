@@ -15,8 +15,10 @@ Steps:
         install.packages("library(changepoint)")
    
    3. use "pip install" to install the following libaries:
+        
         pip3 install pyculiarity requests
    4. Modify the following file:
+        
         cd /usr/local/lib/python3.6/site-packages/
         2to3 -w -n pyculiarity
         
@@ -28,6 +30,7 @@ Steps:
         export Bearer="blah" (you have to give the quotes also)**
      
    7. You can run the python script as follows
+        
         python3 data_analysis_dynamic.py 860170 2017-01-01 2017-01-28
     
       arguments are <garage_id> <start_date> <end_date>
