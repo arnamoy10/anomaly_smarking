@@ -88,8 +88,12 @@ def main():
         (smarking_globals.occupancies_all_groups[ii], smarking_globals.names_all_groups[ii])
         
     #print detected anomalies
-    for item in smarking_globals.anomalies_for_google_docs:
-        print (item[0],item[1]) 
+    if (len(smarking_globals.anomalies_for_google_docs) == 0):
+        print ('\033[92m'+"Hurray, no anomalies"+'\033[0m')
+    else:
+        print ('\033[91m'+"Time to fix the follwing anomalies"+'\033[0m')
+        for item in smarking_globals.anomalies_for_google_docs:
+            print (item[0],item[1]) 
 
 if __name__ == "__main__":   
     main()
