@@ -28,7 +28,7 @@ smarking_globals.headers = {"Authorization":smarking_globals.bearer}
 def get_json_info(url):
     #get the response using the url
     response = requests.get(url,headers=smarking_globals.headers)
-    content = response.content
+    content = response.text
 
     #see if content was received.  If nothing  received, exit
     if (content == ""):
